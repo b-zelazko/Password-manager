@@ -26,6 +26,38 @@ def password_generator():
 
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
+def data_check():
+    website = website_input.get().lower()
+    email = email_input.get().lower()
+    password = password_input.get()
+    if len(password) == 0 or len(email) == 0 or len(website) == 0:
+        messagebox.showerror(title="Saving error", message="Website or email or password can't be empty!")
+    else:
+        is_ok = messagebox.askokcancel(title="Confirmation",
+                                       message=f"Do you want to save this password?\nwebsite: {website}\nemail: {email}"
+                                               f"\npassword: {password}")
+        if is_ok:
+            try:
+                with open("data.json", "r") as file:
+                    data = json.load(file)
+                    print(data)
+                    if website in data:
+                        new_password = messagebox.askokcancel(title="Confirmation",
+                                                              message=f"Password for this website already exist. Do "
+                                                                      f"you want to "
+                                                                      f"overwrite?")
+                        if new_password:
+                            save()
+                        else:
+                            messagebox.showinfo(title="Confirmation", message="Saving password has been canceled")
+                            return
+                    else:
+                        save()
+            except FileNotFoundError:
+                save()
+        else:
+            messagebox.showwarning(message="Saving password has been canceled")
+
 
 def save():
     website = website_input.get().lower()
@@ -38,28 +70,20 @@ def save():
         }
     }
 
-    if len(password) == 0 or len(email) == 0 or len(website) == 0:
-        messagebox.showerror(title="Saving error", message="Website or email or password can't be empty!")
+    try:
+        with open("data.json", "r") as file:
+            data = json.load(file)
+            data.update(new_data)
+    except FileNotFoundError:
+        with open("data.json", "w") as file:
+            json.dump(new_data, file, indent=4)
     else:
-        is_ok = messagebox.askokcancel(title="Confirmation",
-                                       message=f"Do you want to save this password?\nwebsite: {website}\nemail: {email}\npassword: {password}")
-        if is_ok:
-            try:
-                with open("data.json", "r") as file:
-                    data = json.load(file)
-                    data.update(new_data)
-            except FileNotFoundError:
-                with open("data.json", "w") as file:
-                    json.dump(new_data, file, indent=4)
-            else:
-                with open("data.json", "w") as file:
-                    json.dump(data, file, indent=4)
+        with open("data.json", "w") as file:
+            json.dump(data, file, indent=4)
 
-            website_input.delete(0, "end")
-            password_input.delete(0, "end")
-            messagebox.showinfo(title="Confirmation", message="Password saved successfully!")
-        else:
-            messagebox.showwarning(message="Saving password has been canceled")
+    website_input.delete(0, "end")
+    password_input.delete(0, "end")
+    messagebox.showinfo(title="Confirmation", message="Password saved successfully!")
 
 
 # -------------------------FINDING PASSWORD --------------------------- #
@@ -107,7 +131,7 @@ password_input.grid(row=4, column=2)
 generate_button = Button(text="Generate Password", command=password_generator)
 generate_button.grid(column=3, row=4)
 
-add_button = Button(text="Add", width=44, command=save)
+add_button = Button(text="Add", width=44, command=data_check)
 add_button.grid(row=5, column=2, columnspan=2)
 
 search_button = Button(text="Search", width=13, command=find_password)
